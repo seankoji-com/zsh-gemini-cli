@@ -7,11 +7,18 @@ Describe 'completion loading with real compinit'
   It "autoloads every registered command when compinit runs $1 plugin loading"
     run_it() {
       zsh -f -c '
+        # Runner checkout parents can be group-writable. Test our plugin from
+        # a private directory and ignore unrelated insecure system fpath entries.
+        fixture=$(mktemp -d) || return
+        TRAPEXIT() { rm -rf -- "$fixture"; }
+        mkdir "$fixture/completions"
+        cp ./zsh-gemini-cli.plugin.zsh "$fixture/"
+        cp ./completions/_gemini "$fixture/completions/"
         autoload -Uz compinit
-        [[ "$1" == before ]] && compinit -D
-        source ./zsh-gemini-cli.plugin.zsh
+        [[ "$1" == before ]] && compinit -D -i
+        source "$fixture/zsh-gemini-cli.plugin.zsh"
         if [[ "$1" == after ]]; then
-          compinit -D
+          compinit -D -i
           _zsh_gemini_cli_late_compdef
         fi
         for command_name in gemini gm; do
