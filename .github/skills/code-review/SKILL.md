@@ -41,10 +41,9 @@ priorities come from the actual code and its test gaps instead.
 
 ## Do not spend attention here
 
-- `.github/workflows/*.yml` — reusable-workflow callers synced from the org's
-  central `seankoji-com/.github` repo (most of this repo's PR history is
-  exactly these sync commits). Treat edits here as mechanical, not
-  repo-specific logic.
+- Unchanged `call-reusable-*.yml` template content can be checked against
+  the central source. Review local workflow changes, including caller
+  triggers, permissions, runner choices, and pinned revisions.
 - `spec/spec_helper.sh` — ShellSpec harness boilerplate.
 - `LICENSE`, `.gitignore`, `.shellspec` — static config, no logic.
 - README wording/formatting, except where it actually drifts from behavior
