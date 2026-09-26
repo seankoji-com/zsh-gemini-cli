@@ -1,0 +1,3 @@
+#compdef fake
+_arguments '--alpha[Alpha]:value:' {-b,--beta}'[Beta]' {-h,--help}'[Help]' '--gamma[Gamma]'
+commands=('sub:A subcommand' 'stop:Stop' 'kill:Stop')

@@ -1,0 +1,29 @@
+#!/bin/sh
+# Stand-in CLI for spec/completion-drift_spec.sh. Prints commander-style help.
+case "$*" in
+  '--version') echo '9.9.9' ;;
+  '--help') cat <<'HELP'
+Usage: fake [options] [command]
+
+Options:
+  --alpha <value>                       Alpha option; see also
+                                        --not-a-flag in a wrapped line
+  -b, --beta                            Beta option
+  -h, --help                            Display help for command
+
+Commands:
+  sub [options]                         A subcommand
+  stop|kill <id>                        Stop something
+  help [command]                        display help for command
+HELP
+  ;;
+  'sub --help') cat <<'HELP'
+Usage: fake sub [options]
+
+Options:
+  --gamma     Gamma option
+  -h, --help  Display help for command
+HELP
+  ;;
+  *) echo "Usage: fake $*" ;;
+esac

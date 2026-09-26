@@ -1,0 +1,75 @@
+name: completion-drift
+
+# Installs the latest CLI, compares its --help output with the completion file
+# and keeps a single open issue up to date while they disagree. It never edits
+# the completions itself: a person checks the new help text and updates them.
+
+on:
+  schedule:
+    - cron: '41 5 * * 1' # Mondays 05:41 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: completion-drift
+  cancel-in-progress: false
+
+env:
+  CLI: gemini
+  NPM_PACKAGE: '@google/gemini-cli'
+  COMPLETION_FILE: completions/_gemini
+  ISSUE_TITLE: 'Completion drift: completions/_gemini is behind gemini --help'
+
+jobs:
+  drift:
+    # GitHub-hosted, matching shellspec.yml: this repo is public.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+
+      - name: Install the latest CLI
+        run: npm install --global "${NPM_PACKAGE}@latest"
+
+      - name: Compare --help with the completion file
+        id: drift
+        run: |
+          set +e
+          bash scripts/completion-drift.sh "$CLI" "$COMPLETION_FILE" > drift.md
+          status=$?
+          set -e
+          cat drift.md
+          case $status in
+            0) echo "drift=false" >> "$GITHUB_OUTPUT" ;;
+            1) echo "drift=true" >> "$GITHUB_OUTPUT" ;;
+            *) echo "::error::completion-drift.sh failed (exit $status)"; exit "$status" ;;
+          esac
+
+      - name: Open or update the drift issue
+        if: steps.drift.outputs.drift == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          {
+            cat drift.md
+            echo
+            echo "Found by the [completion-drift run]($RUN_URL). This issue is"
+            echo "updated in place on each weekly run while the drift remains."
+          } > body.md
+          number=$(gh issue list --state open --search "in:title \"$ISSUE_TITLE\"" \
+            --json number,title --jq ".[] | select(.title == env.ISSUE_TITLE) | .number" | head -1)
+          if [ -n "$number" ]; then
+            gh issue edit "$number" --body-file body.md
+          else
+            gh issue create --title "$ISSUE_TITLE" --body-file body.md
+          fi

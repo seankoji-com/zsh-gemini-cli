@@ -1,5 +1,9 @@
 #compdef gemini gm
 
+# Completions for the Gemini CLI, checked against `gemini --help` and each
+# subcommand's --help (Gemini CLI 0.61.0). scripts/completion-drift.sh reports
+# anything the installed CLI shows that this file does not.
+
 # Main completion function
 _gemini_cli() {
     local curcontext="$curcontext" state line
@@ -9,8 +13,12 @@ _gemini_cli() {
     commands=(
         'mcp:Manage MCP servers'
         'extensions:Manage Gemini CLI extensions'
+        'extension:Manage Gemini CLI extensions'
         'skills:Manage agent skills'
+        'skill:Manage agent skills'
         'hooks:Manage Gemini CLI hooks'
+        'hook:Manage Gemini CLI hooks'
+        'gemma:Manage local Gemma model routing'
     )
 
     _arguments -C \
@@ -18,16 +26,22 @@ _gemini_cli() {
         {-m,--model}'[Specify model]:model:' \
         {-p,--prompt}'[Run in headless mode with prompt]:prompt:' \
         {-i,--prompt-interactive}'[Continue interactive mode after executing prompt]:prompt:' \
+        '--skip-trust[Trust the current workspace for this session]' \
+        {-w,--worktree}'[Start in a new git worktree]::name:' \
         {-s,--sandbox}'[Run in sandbox]' \
         {-y,--yolo}'[Automatically accept all actions (YOLO mode)]' \
         '--approval-mode[Set approval mode]:mode:(default auto_edit yolo plan)' \
-        '--policy[Additional policy file or directory]:policy:_files' \
-        '--experimental-acp[Start agent in ACP mode]' \
+        '*--policy[Additional policy files or directories]:policy:_files' \
+        '*--admin-policy[Additional admin policy files or directories]:policy:_files' \
+        '--acp[Start the agent in ACP mode]' \
+        '--experimental-acp[Start the agent in ACP mode (deprecated, use --acp)]' \
         '--allowed-mcp-server-names[Allowed MCP server names]:servers:' \
         '--allowed-tools[Tools that can run without confirmation]:tools:' \
         {-e,--extensions}'[List of extensions to use]:extensions:' \
         {-l,--list-extensions}'[List all available extensions and exit]' \
-        {-r,--resume}'[Resume previous session]:session:(latest)' \
+        {-r,--resume}'[Resume previous session (latest or index)]:session:(latest)' \
+        '--session-file[Load a session from a JSON file]:file:_files -g "*.json"' \
+        '--session-id[Start a new session with this UUID]:uuid:' \
         '--list-sessions[List available sessions for current project and exit]' \
         '--delete-session[Delete session by index number]:index:' \
         '--include-directories[Additional directories to include in workspace]:dir:_files -/' \
@@ -49,14 +63,17 @@ _gemini_cli() {
                 mcp)
                     _gemini_cli_mcp
                     ;;
-                extensions)
+                extensions|extension)
                     _gemini_cli_extensions
                     ;;
-                skills)
+                skills|skill)
                     _gemini_cli_skills
                     ;;
-                hooks)
+                hooks|hook)
                     _gemini_cli_hooks
+                    ;;
+                gemma)
+                    _gemini_cli_gemma
                     ;;
             esac
             ;;
@@ -244,11 +261,18 @@ _gemini_cli_extensions() {
                 link)
                     _gemini_cli_extensions_link
                     ;;
-                new|validate)
+                new)
                     _arguments \
                         {-d,--debug}'[Debug mode]' \
                         {-h,--help}'[Show help]' \
-                        '*:path:_files'
+                        '1:path:_files -/' \
+                        '2:template:'
+                    ;;
+                validate)
+                    _arguments \
+                        {-d,--debug}'[Debug mode]' \
+                        {-h,--help}'[Show help]' \
+                        '1:path:_files -/'
                     ;;
                 config)
                     _gemini_cli_extensions_config
@@ -266,6 +290,7 @@ _gemini_cli_extensions_install() {
         '--auto-update[Enable auto-update]' \
         '--pre-release[Enable pre-release versions]' \
         '--consent[Confirm security risks and skip confirmation prompts]' \
+        '--skip-settings[Skip the configuration on install]' \
         {-h,--help}'[Show help]' \
         '1:source:_files'
 }
@@ -316,6 +341,7 @@ _gemini_cli_extensions_uninstall() {
 
     _arguments \
         {-d,--debug}'[Debug mode]' \
+        '--all[Uninstall all installed extensions]' \
         {-h,--help}'[Show help]' \
         '*: :->extension'
 
@@ -522,6 +548,60 @@ _gemini_cli_skills_uninstall() {
         '--scope[Uninstall scope]:scope:(user workspace)' \
         {-h,--help}'[Show help]' \
         '1:name:'
+}
+
+# gemma subcommand completion
+_gemini_cli_gemma() {
+    local curcontext="$curcontext" state line
+    typeset -A opt_args
+
+    local -a gemma_cmds
+    gemma_cmds=(
+        'setup:Download and configure Gemma local model routing'
+        'start:Start the LiteRT-LM server'
+        'stop:Stop the LiteRT-LM server'
+        'status:Check Gemma local model routing status'
+        'logs:View LiteRT-LM server logs'
+    )
+
+    _arguments -C \
+        {-d,--debug}'[Debug mode]' \
+        {-h,--help}'[Show help]' \
+        '1: :->command' \
+        '*::arg:->args'
+
+    case $state in
+        command)
+            _describe -t gemma_cmds 'gemma commands' gemma_cmds
+            ;;
+        args)
+            case $line[1] in
+                setup)
+                    _arguments \
+                        {-d,--debug}'[Debug mode]' \
+                        '--port[Port for the LiteRT server]:port:' \
+                        '--skip-model[Skip model download (binary only)]' \
+                        '--start[Start the server after setup]' \
+                        '--force[Re-download binary and model]' \
+                        '--consent[Skip interactive consent prompt]' \
+                        {-h,--help}'[Show help]'
+                    ;;
+                start|stop|status)
+                    _arguments \
+                        {-d,--debug}'[Debug mode]' \
+                        '--port[Port of the LiteRT server]:port:' \
+                        {-h,--help}'[Show help]'
+                    ;;
+                logs)
+                    _arguments \
+                        {-d,--debug}'[Debug mode]' \
+                        {-n,--lines}'[Show the last N lines and exit]:lines:' \
+                        {-f,--follow}'[Follow log output]' \
+                        {-h,--help}'[Show help]'
+                    ;;
+            esac
+            ;;
+    esac
 }
 
 _gemini_cli "$@"
