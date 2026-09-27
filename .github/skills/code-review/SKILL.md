@@ -39,11 +39,14 @@ priorities come from the actual code and its test gaps instead.
   check against the real completion/alias definitions — flag it when a PR
   adds or renames a subcommand or alias in one place but not the other.
 
+- Review local workflow changes, including reusable caller triggers,
+  permissions, runner choices, and pinned revisions.
+
 ## Do not spend attention here
 
-- Unchanged `call-reusable-*.yml` template content can be checked against
-  the central source. Review local workflow changes, including caller
-  triggers, permissions, runner choices, and pinned revisions.
+- Unchanged reusable workflow template content can be checked against its
+  central source; review any local changes.
+
 - `spec/spec_helper.sh` — ShellSpec harness boilerplate.
 - `LICENSE`, `.gitignore`, `.shellspec` — static config, no logic.
 - README wording/formatting, except where it actually drifts from behavior
