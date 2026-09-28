@@ -1,0 +1,4 @@
+#compdef fake
+# --gamma is only mentioned in a comment, which must not count.
+_arguments '--alpha[Alpha]:value:' {-b,--beta}'[Beta]' {-h,--help}'[Help]' '--removed[Gone]'
+commands=('sub:A subcommand' 'stop:Stop')
