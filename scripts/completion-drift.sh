@@ -12,7 +12,8 @@
 # The presence check is file-wide, not per subcommand, so it catches missing
 # and removed options without having to parse zsh _arguments specs.
 #
-# Prints a Markdown report. Exits 0 when in sync, 1 on drift, 2 on usage error.
+# Prints a Markdown report. Exits 0 when in sync, 1 on drift, and 2 on
+# usage errors or incomplete help output.
 
 set -uo pipefail
 
@@ -93,8 +94,14 @@ walk() {
   local depth=$1
   shift
   local help name
-  help=$(run_help "$@") || true
-  [[ -n $help ]] || return 0
+  if ! help=$(run_help "$@"); then
+    printf 'cannot read help for `%s --help`\n' "$cli${*:+ $*}" >&2
+    return 2
+  fi
+  if [[ -z $help ]]; then
+    printf 'empty help output for `%s --help`\n' "$cli${*:+ $*}" >&2
+    return 2
+  fi
 
   while IFS= read -r flag; do
     [[ -n $flag ]] || continue
@@ -113,12 +120,12 @@ walk() {
     fi
     in_completion "$name" || missing_cmds+=("\`$cli${*:+ $*} $name\`")
     if [[ -z $alias_only ]] && (( depth < max_depth )); then
-      walk $((depth + 1)) "$@" "$name"
+      walk $((depth + 1)) "$@" "$name" || return 2
     fi
   done < <(printf '%s\n' "$help" | extract_commands "$cli $*")
 }
 
-walk 1
+walk 1 || exit 2
 
 while IFS= read -r flag; do
   [[ -n ${seen_flags[$flag]:-} ]] || stale_flags+=("\`$flag\`")
