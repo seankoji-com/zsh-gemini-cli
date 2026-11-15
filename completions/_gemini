@@ -22,7 +22,7 @@ _gemini_cli() {
         'models:Manage or list Gemini models'
     )
 
-    _arguments -C \
+    _arguments -C -A '-*' \
         {-d,--debug}'[Debug mode]' \
         {-m,--model}'[Specify model]:model:' \
         {-p,--prompt}'[Run in headless mode with prompt]:prompt:' \
@@ -90,7 +90,8 @@ _gemini_cli_models() {
     _arguments \
         {-d,--debug}'[Debug mode]' \
         {-o,--output-format}'[Output format]:format:(text json)' \
-        {-h,--help}'[Show help]'
+        {-h,--help}'[Show help]' \
+        '1:command:(list)'
 }
 
 # mcp subcommand completion

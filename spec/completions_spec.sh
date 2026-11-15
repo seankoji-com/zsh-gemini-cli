@@ -78,11 +78,17 @@ Describe 'models completion dispatch'
     The output should include '--list-models[List available Gemini models and exit]'
   End
 
+  It 'stops parsing top-level options after the command'
+    When call run_completion flags
+    The output should include '-A'
+    The output should include '-*'
+  End
+
   It 'dispatches models and offers its output formats and help'
     When call run_completion models
     The output should include '--output-format[Output format]:format:(text json)'
     The output should include '--help[Show help]'
     The output should include '--debug[Debug mode]'
-    The output should not include 'stream-json'
+    The output should include '1:command:(list)'
   End
 End
