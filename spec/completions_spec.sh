@@ -43,3 +43,46 @@ Describe 'completions/_gemini'
     The status should be success
   End
 End
+
+Describe 'models completion dispatch'
+  # Stub zsh's completion primitives to exercise the command dispatch and inspect
+  # the actual argument specifications passed to _arguments.
+  run_completion() {
+    MODE="$1" zsh -f -c '
+      _arguments() {
+        if [[ "$1" == -C ]]; then
+          if [[ "$MODE" == commands ]]; then
+            state=command
+          elif [[ "$MODE" == models ]]; then
+            state=args
+            line=(models)
+          else
+            print -rl -- "$@"
+          fi
+        else
+          print -rl -- "$@"
+        fi
+      }
+      _describe() { print -rl -- "${commands[@]}"; }
+      source completions/_gemini
+    '
+  }
+
+  It 'offers models as a command'
+    When call run_completion commands
+    The output should include 'models:Manage or list Gemini models'
+  End
+
+  It 'offers the top-level list-models flag'
+    When call run_completion flags
+    The output should include '--list-models[List available Gemini models and exit]'
+  End
+
+  It 'dispatches models and offers its output formats and help'
+    When call run_completion models
+    The output should include '--output-format[Output format]:format:(text json)'
+    The output should include '--help[Show help]'
+    The output should include '--debug[Debug mode]'
+    The output should not include 'stream-json'
+  End
+End
