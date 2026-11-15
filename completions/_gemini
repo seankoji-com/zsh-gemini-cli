@@ -1,8 +1,8 @@
 #compdef gemini gm
 
-# Completions for the Gemini CLI, checked against `gemini --help` and each
-# subcommand's --help (Gemini CLI 0.61.0). scripts/completion-drift.sh reports
-# anything the installed CLI shows that this file does not.
+# Completions for the Gemini CLI. The models command and top-level options were
+# checked against Gemini CLI 0.68.0. scripts/completion-drift.sh checks for drift
+# across the installed CLI's help output.
 
 # Main completion function
 _gemini_cli() {
@@ -19,9 +19,10 @@ _gemini_cli() {
         'hooks:Manage Gemini CLI hooks'
         'hook:Manage Gemini CLI hooks'
         'gemma:Manage local Gemma model routing'
+        'models:Manage or list Gemini models'
     )
 
-    _arguments -C \
+    _arguments -C -A '-*' \
         {-d,--debug}'[Debug mode]' \
         {-m,--model}'[Specify model]:model:' \
         {-p,--prompt}'[Run in headless mode with prompt]:prompt:' \
@@ -39,6 +40,7 @@ _gemini_cli() {
         '--allowed-tools[Tools that can run without confirmation]:tools:' \
         {-e,--extensions}'[List of extensions to use]:extensions:' \
         {-l,--list-extensions}'[List all available extensions and exit]' \
+        '--list-models[List available Gemini models and exit]' \
         {-r,--resume}'[Resume previous session (latest or index)]:session:(latest)' \
         '--session-file[Load a session from a JSON file]:file:_files -g "*.json"' \
         '--session-id[Start a new session with this UUID]:uuid:' \
@@ -75,9 +77,21 @@ _gemini_cli() {
                 gemma)
                     _gemini_cli_gemma
                     ;;
+                models)
+                    _gemini_cli_models
+                    ;;
             esac
             ;;
     esac
+}
+
+# models subcommand completion
+_gemini_cli_models() {
+    _arguments \
+        {-d,--debug}'[Debug mode]' \
+        {-o,--output-format}'[Output format]:format:(text json)' \
+        {-h,--help}'[Show help]' \
+        '1:command:(list)'
 }
 
 # mcp subcommand completion
