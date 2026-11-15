@@ -4,8 +4,9 @@ Describe 'zsh-gemini-cli.plugin.zsh'
 
   Describe 'completions'
     It 'adds its completions directory to fpath'
-      When call print -r -- "${fpath[(r)*zsh-gemini-cli/completions]}"
-      The output should end with 'zsh-gemini-cli/completions'
+      expected_completions_dir=${PWD:A}/completions
+      When call print -r -- "${fpath[${fpath[(Ie)$expected_completions_dir]}]}"
+      The output should equal "$expected_completions_dir"
     End
 
     It 'ships a completion file for the right commands'
